@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-pos-noun: #3498db;
+  --color-pos-verb: #e74c3c;
+  --color-pos-adj: #2ecc71;
+  --color-pos-adv: #f39c12;
+  --color-pos-pron: #9b59b6;
+  --color-pos-det: #95a5a6;
+  --color-pos-adp: #1abc9c;
+  --color-pos-conj: #7f8c8d;
+  --color-pos-intj: #e67e22;
+}
+
+/* ── Light theme (default) ── */
+:root {
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f3f4f6;
+  --color-surface-glass: rgba(255, 255, 255, 0.8);
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-faint: #9ca3af;
+  --color-text-disabled: #d1d5db;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-hover: #f3f4f6;
+  --color-accent: #2563eb;
+  --color-accent-light: #dbeafe;
+  --color-accent-text: #2563eb;
+  --color-accent-surface: #eff6ff;
+  --color-highlight: #fbbf24;
+  --color-error-surface: #fef2f2;
+  --color-error-text: #dc2626;
+  --color-success: #22c55e;
+  --color-toggle-off: #e5e7eb;
+  --color-highlight-text: #78350f;
+  --color-selected-text: #1e3a8a;
+  --color-accent-hover: #1d4ed8;
+  --color-scrollbar: #d1d5db;
+  --color-scrollbar-hover: #9ca3af;
+
+  /* POS badge colors */
+  --color-pos-badge-noun-bg: #dbeafe;
+  --color-pos-badge-noun-text: #1d4ed8;
+  --color-pos-badge-verb-bg: #fee2e2;
+  --color-pos-badge-verb-text: #b91c1c;
+  --color-pos-badge-adj-bg: #dcfce7;
+  --color-pos-badge-adj-text: #15803d;
+  --color-pos-badge-adv-bg: #ffedd5;
+  --color-pos-badge-adv-text: #c2410c;
+  --color-pos-badge-pron-bg: #f3e8ff;
+  --color-pos-badge-pron-text: #7e22ce;
+  --color-pos-badge-det-bg: #f3f4f6;
+  --color-pos-badge-det-text: #4b5563;
+  --color-pos-badge-adp-bg: #ccfbf1;
+  --color-pos-badge-adp-text: #0f766e;
+  --color-pos-badge-intj-bg: #fef3c7;
+  --color-pos-badge-intj-text: #b45309;
+  --color-pos-badge-default-bg: #f3f4f6;
+  --color-pos-badge-default-text: #4b5563;
+}
+
+/* ── Dark theme (reading-optimized) ── */
+.dark {
+  --color-bg: #1a1a2e;
+  --color-surface: #262640;
+  --color-surface-alt: #2d2d4a;
+  --color-surface-glass: rgba(38, 38, 64, 0.85);
+  --color-text-primary: #e8e6e3;
+  --color-text-secondary: #c9c9c9;
+  --color-text-muted: #9ca3af;
+  --color-text-faint: #6b7280;
+  --color-text-disabled: #4b5563;
+  --color-border: #374151;
+  --color-border-strong: #4b5563;
+  --color-hover: #333355;
+  --color-accent: #3b82f6;
+  --color-accent-light: #1e3a5f;
+  --color-accent-text: #60a5fa;
+  --color-accent-surface: #1e2a4a;
+  --color-highlight: #d97706;
+  --color-highlight-text: #fffbeb;
+  --color-selected-text: #bfdbfe;
+  --color-accent-hover: #60a5fa;
+  --color-error-surface: #3b1c1c;
+  --color-error-text: #f87171;
+  --color-success: #4ade80;
+  --color-toggle-off: #4b5563;
+  --color-scrollbar: #4b5563;
+  --color-scrollbar-hover: #6b7280;
+
+  /* POS colors — more luminous for dark backgrounds */
+  --color-pos-noun: #5dade2;
+  --color-pos-verb: #f1948a;
+  --color-pos-adj: #58d68d;
+  --color-pos-adv: #f5b041;
+  --color-pos-pron: #bb8fce;
+  --color-pos-det: #aab7b8;
+  --color-pos-adp: #48c9b0;
+  --color-pos-conj: #99a3a4;
+  --color-pos-intj: #eb984e;
+
+  /* POS badge colors — desaturated dark backgrounds with light text */
+  --color-pos-badge-noun-bg: #1e3a5f;
+  --color-pos-badge-noun-text: #93c5fd;
+  --color-pos-badge-verb-bg: #3b1c1c;
+  --color-pos-badge-verb-text: #fca5a5;
+  --color-pos-badge-adj-bg: #1a3a2a;
+  --color-pos-badge-adj-text: #86efac;
+  --color-pos-badge-adv-bg: #3b2a1a;
+  --color-pos-badge-adv-text: #fdba74;
+  --color-pos-badge-pron-bg: #2d1a3e;
+  --color-pos-badge-pron-text: #d8b4fe;
+  --color-pos-badge-det-bg: #374151;
+  --color-pos-badge-det-text: #9ca3af;
+  --color-pos-badge-adp-bg: #1a3a35;
+  --color-pos-badge-adp-text: #5eead4;
+  --color-pos-badge-intj-bg: #3b2a1a;
+  --color-pos-badge-intj-text: #fbbf24;
+  --color-pos-badge-default-bg: #374151;
+  --color-pos-badge-default-text: #9ca3af;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-hover);
+}

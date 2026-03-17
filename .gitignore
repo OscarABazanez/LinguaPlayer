@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Video files (too large for git)
+*.mp4
+*.mkv
+*.webm
+*.avi
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Claude
+.claude/
