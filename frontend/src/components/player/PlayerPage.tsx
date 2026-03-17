@@ -7,6 +7,7 @@ import { useGrammarCoach } from '../../hooks/useGrammarCoach';
 import { useSegmentLoop } from '../../hooks/useSegmentLoop';
 import { useActiveWord } from '../../hooks/useActiveWord';
 import { useVideoGestures } from '../../hooks/useVideoGestures';
+import { usePronunciationPractice } from '../../hooks/usePronunciationPractice';
 import VideoPlayer from './VideoPlayer';
 import PlayerControls from './PlayerControls';
 import ProgressSeekBar from './ProgressSeekBar';
@@ -14,6 +15,7 @@ import SubtitleOverlay from './SubtitleOverlay';
 import Sidebar from '../sidebar/Sidebar';
 import GrammarPopup from '../popup/GrammarPopup';
 import type { Word } from '../../types/subtitle';
+import type { TabKey } from '../sidebar/SidebarTabs';
 
 export default function PlayerPage() {
   const { videoSource, segments, detectedLanguage, nativeLanguage } = useAppState();
@@ -32,9 +34,10 @@ export default function PlayerPage() {
   });
 
   const activeWordIndex = useActiveWord(activeSegment?.words, player.currentTime);
+  const pronunciation = usePronunciationPractice();
 
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
-  const [activeTab, setActiveTab] = useState<'script' | 'vocab' | 'grammar'>('script');
+  const [activeTab, setActiveTab] = useState<TabKey>('script');
   const [showGrammarPopup, setShowGrammarPopup] = useState(false);
 
   const handleWordClick = (word: Word) => {
@@ -67,6 +70,21 @@ export default function PlayerPage() {
     grammar.explain(activeSegment.text, detectedLanguage, nativeLanguage);
     setShowGrammarPopup(true);
     setActiveTab('grammar');
+  };
+
+  const handleMicStart = () => {
+    if (!activeSegment) return;
+    player.pause();
+    pronunciation.startPractice(activeSegment.text, detectedLanguage, nativeLanguage);
+    setActiveTab('practice');
+  };
+
+  const handleMicStop = () => {
+    pronunciation.stopPractice();
+  };
+
+  const handleRequestTips = () => {
+    pronunciation.requestTips(nativeLanguage);
   };
 
   const videoSrc = videoSource?.type === 'file' ? videoSource.objectUrl : undefined;
@@ -124,6 +142,9 @@ export default function PlayerPage() {
             onSetSpeed={player.setPlaybackRate}
             onGrammarCoach={handleGrammarCoach}
             grammarLoading={grammar.loading}
+            pronunciationState={pronunciation.state}
+            onMicStart={handleMicStart}
+            onMicStop={handleMicStop}
           />
           </div>
 
@@ -149,6 +170,18 @@ export default function PlayerPage() {
             grammarLoading={grammar.loading}
             grammarError={grammar.error}
             grammarSentence={grammar.sentence}
+            activeSegmentText={activeSegment?.text ?? null}
+            pronunciationState={pronunciation.state}
+            pronunciationResult={pronunciation.result}
+            pronunciationError={pronunciation.error}
+            pronunciationTips={pronunciation.pronunciationTips}
+            tipsLoading={pronunciation.tipsLoading}
+            audioUrl={pronunciation.audioUrl}
+            onPronunciationStart={handleMicStart}
+            onPronunciationStop={handleMicStop}
+            onPronunciationSubmit={pronunciation.submitRecording}
+            onPronunciationReset={pronunciation.reset}
+            onRequestTips={handleRequestTips}
           />
         </div>
       </div>

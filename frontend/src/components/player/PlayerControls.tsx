@@ -1,4 +1,6 @@
 import { PLAYBACK_SPEEDS } from '../../utils/constants';
+import RecordButton from '../pronunciation/RecordButton';
+import type { PracticeState } from '../../hooks/usePronunciationPractice';
 
 interface Props {
   isPlaying: boolean;
@@ -10,6 +12,9 @@ interface Props {
   onSetSpeed: (rate: number) => void;
   onGrammarCoach: () => void;
   grammarLoading?: boolean;
+  pronunciationState?: PracticeState;
+  onMicStart?: () => void;
+  onMicStop?: () => void;
 }
 
 export default function PlayerControls({
@@ -22,6 +27,9 @@ export default function PlayerControls({
   onSetSpeed,
   onGrammarCoach,
   grammarLoading,
+  pronunciationState = 'idle',
+  onMicStart,
+  onMicStop,
 }: Props) {
   const nextSpeed = () => {
     const idx = PLAYBACK_SPEEDS.indexOf(playbackRate as typeof PLAYBACK_SPEEDS[number]);
@@ -82,6 +90,16 @@ export default function PlayerControls({
       >
         {playbackRate}x
       </button>
+
+      {/* Pronunciation Practice */}
+      {onMicStart && onMicStop && (
+        <RecordButton
+          state={pronunciationState}
+          onStart={onMicStart}
+          onStop={onMicStop}
+          compact
+        />
+      )}
 
       {/* Grammar Coach */}
       <ControlButton onClick={onGrammarCoach} aria-label="Grammar Coach" active={grammarLoading}>

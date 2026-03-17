@@ -100,3 +100,51 @@ export async function getGrammarExplanation(req: GrammarRequest): Promise<string
   }
   return chunks.join('');
 }
+
+/**
+ * Stream a raw prompt directly to LM Studio without any grammar wrapper.
+ * Used for pronunciation tips and other non-grammar LLM tasks.
+ */
+export async function* streamRawLLM(prompt: string): AsyncGenerator<string> {
+  // Direct call to LM Studio via Vite proxy
+  const res = await fetch(`/lmstudio/v1/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: LM_STUDIO_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 1024,
+    }),
+  });
+
+  if (!res.ok) throw new Error('LLM request failed');
+  if (!res.body) throw new Error('No response body');
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const dataStr = line.slice(6).trim();
+      if (dataStr === '[DONE]') return;
+      try {
+        const data = JSON.parse(dataStr);
+        const content = data.choices?.[0]?.delta?.content ?? '';
+        if (content) yield content;
+      } catch {
+        continue;
+      }
+    }
+  }
+}
