@@ -36,7 +36,7 @@ export default function InteractiveWord({ word, showGrammarColor, isSelected, is
   const highlightClass = isSelected
     ? 'bg-[--color-accent-light] text-[--color-selected-text] font-bold rounded px-0.5'
     : isActive
-      ? 'inline-block scale-125 bg-[--color-highlight] text-[--color-highlight-text] font-bold rounded-sm px-0.5'
+      ? 'inline-block scale-[1.20] font-bold'
       : '';
 
   useEffect(() => {
@@ -65,6 +65,7 @@ export default function InteractiveWord({ word, showGrammarColor, isSelected, is
             ${colorClass}
             ${highlightClass}
           `}
+          style={isActive ? { color: 'var(--color-highlight)' } : undefined}
         >
           {word.text}
         </span>
