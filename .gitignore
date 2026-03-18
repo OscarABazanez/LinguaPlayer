@@ -35,5 +35,11 @@ __pycache__/
 venv/
 .venv/
 
+# Uploads (keep folders, ignore files)
+backend/uploads/raw/*
+backend/uploads/processed/*
+!backend/uploads/raw/.gitkeep
+!backend/uploads/processed/.gitkeep
+
 # Claude
 .claude/

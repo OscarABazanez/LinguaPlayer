@@ -5,6 +5,7 @@ export interface VideoSource {
   file?: File;
   youtubeUrl?: string;
   objectUrl?: string;
+  storedName?: string;
 }
 
 export type ProcessingStep =

@@ -4,13 +4,17 @@ import type { ProcessingStep } from '../../types/video';
 import ProgressBar from './ProgressBar';
 import LanguageConfirm from './LanguageConfirm';
 import { transcribeVideo, type TranscriptionProgress } from '../../services/whisperService';
+import { uploadVideo, markVideoProcessed } from '../../services/uploadService';
+
+type ExtendedStep = ProcessingStep | 'uploading';
 
 interface StepInfo {
-  key: ProcessingStep;
+  key: ExtendedStep;
   label: string;
 }
 
 const STEPS: StepInfo[] = [
+  { key: 'uploading', label: 'Uploading video...' },
   { key: 'loading-model', label: 'Loading Whisper model...' },
   { key: 'extracting-audio', label: 'Extracting audio...' },
   { key: 'transcribing', label: 'Transcribing with Whisper...' },
@@ -18,7 +22,7 @@ const STEPS: StepInfo[] = [
 ];
 
 // Map whisper service steps to our ProcessingStep
-function mapStep(step: TranscriptionProgress['step']): ProcessingStep {
+function mapStep(step: TranscriptionProgress['step']): ExtendedStep {
   switch (step) {
     case 'checking': return 'loading-model';
     case 'downloading-model': return 'loading-model';
@@ -31,7 +35,7 @@ function mapStep(step: TranscriptionProgress['step']): ProcessingStep {
 export default function ProcessingPage() {
   const { videoSource } = useAppState();
   const dispatch = useAppDispatch();
-  const [currentStep, setCurrentStep] = useState<ProcessingStep>('loading-model');
+  const [currentStep, setCurrentStep] = useState<ExtendedStep>('uploading');
   const [progress, setProgress] = useState(0);
   const [detectedLang, setDetectedLang] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +47,43 @@ export default function ProcessingPage() {
 
     async function process() {
       try {
+        // Step 0: Upload video to backend (raw/)
+        setCurrentStep('uploading');
+        setProgress(0);
+        let storedName: string | undefined;
+        try {
+          const uploadResult = await uploadVideo(videoSource!.file!, (pct) => {
+            if (!cancelled) setProgress(Math.round(pct * 0.15));
+          });
+          storedName = uploadResult.storedName;
+          dispatch({
+            type: 'SET_VIDEO_SOURCE',
+            source: { ...videoSource!, storedName },
+          });
+        } catch {
+          // Backend may be unavailable — continue without upload
+          console.warn('Video upload to backend failed, continuing with local processing');
+        }
+
+        if (cancelled) return;
+
+        // Steps 1-4: Transcribe with Whisper (client-side)
         const result = await transcribeVideo(videoSource!.file!, (p: TranscriptionProgress) => {
           if (cancelled) return;
           setCurrentStep(mapStep(p.step));
-          setProgress(p.progress);
+          setProgress(Math.round(15 + p.progress * 0.85));
         });
 
         if (cancelled) return;
+
+        // Mark video as processed (move raw/ → processed/)
+        if (storedName) {
+          try {
+            await markVideoProcessed(storedName);
+          } catch {
+            console.warn('Failed to mark video as processed');
+          }
+        }
 
         setDetectedLang(result.detectedLanguage);
         dispatch({ type: 'SET_DETECTED_LANGUAGE', language: result.detectedLanguage });

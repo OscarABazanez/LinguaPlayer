@@ -14,6 +14,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/lmstudio': {
         target: 'http://127.0.0.1:1234',
         changeOrigin: true,
