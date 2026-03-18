@@ -4,7 +4,7 @@ import YouTubeInput from './YouTubeInput';
 import LanguageSelector from './LanguageSelector';
 
 export default function HomePage() {
-  const { nativeLanguage } = useAppState();
+  const { nativeLanguage, videoLanguage } = useAppState();
   const dispatch = useAppDispatch();
 
   const handleFileSelected = (file: File) => {
@@ -40,7 +40,13 @@ export default function HomePage() {
 
         <YouTubeInput onSubmit={handleYouTubeSubmit} />
 
-        <div className="pt-2">
+        <div className="pt-2 space-y-4">
+          <LanguageSelector
+            value={videoLanguage}
+            onChange={(lang) => dispatch({ type: 'SET_VIDEO_LANGUAGE', language: lang })}
+            label="Video language"
+            showAutoOption
+          />
           <LanguageSelector
             value={nativeLanguage}
             onChange={(lang) => dispatch({ type: 'SET_NATIVE_LANGUAGE', language: lang })}

@@ -32,6 +32,7 @@ const MODEL: WhisperWebModel = 'base';
 export async function transcribeVideo(
   file: File,
   onProgress: (p: TranscriptionProgress) => void,
+  language: string = 'auto',
 ): Promise<TranscriptionResult> {
 
   // Step 1: Check support
@@ -79,7 +80,7 @@ export async function transcribeVideo(
   const result = await transcribe({
     channelWaveform,
     model: MODEL,
-    language: 'auto',
+    language,
     onProgress: (p) => {
       const pct = Math.round(50 + p * 45);
       onProgress({

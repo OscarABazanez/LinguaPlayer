@@ -34,7 +34,7 @@ function mapStep(step: TranscriptionProgress['step']): ExtendedStep {
 }
 
 export default function ProcessingPage() {
-  const { videoSource, nativeLanguage } = useAppState();
+  const { videoSource, nativeLanguage, videoLanguage } = useAppState();
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState<ExtendedStep>('uploading');
   const [progress, setProgress] = useState(0);
@@ -88,7 +88,7 @@ export default function ProcessingPage() {
           if (cancelled) return;
           setCurrentStep(mapStep(p.step));
           setProgress(Math.round(15 + p.progress * 0.85));
-        });
+        }, videoLanguage);
 
         if (cancelled) return;
 
