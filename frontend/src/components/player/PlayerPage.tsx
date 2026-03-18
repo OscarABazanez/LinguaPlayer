@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppState } from '../../stores/appStore';
+import { saveWordLookup } from '../../services/supabaseService';
 import { useVideoPlayer } from '../../hooks/useVideoPlayer';
 import { useSubtitleSync } from '../../hooks/useSubtitleSync';
 import { useLearningModes } from '../../hooks/useLearningModes';
@@ -18,7 +19,7 @@ import type { Word } from '../../types/subtitle';
 import type { TabKey } from '../sidebar/SidebarTabs';
 
 export default function PlayerPage() {
-  const { videoSource, segments, detectedLanguage, nativeLanguage } = useAppState();
+  const { videoSource, segments, detectedLanguage, nativeLanguage, supabaseVideoId } = useAppState();
   const player = useVideoPlayer();
   const { activeSegmentIndex, activeSegment } = useSubtitleSync(segments, player.currentTime);
   const modes = useLearningModes();
@@ -43,6 +44,16 @@ export default function PlayerPage() {
   const handleWordClick = (word: Word) => {
     player.pause();
     setSelectedWord(word);
+
+    // Save word lookup to Supabase
+    if (supabaseVideoId && activeSegment) {
+      saveWordLookup(
+        supabaseVideoId,
+        word.cleanWord,
+        activeSegment.text,
+        activeSegmentIndex,
+      ).catch(() => { /* silent fail */ });
+    }
   };
 
   const handleClosePopup = () => {

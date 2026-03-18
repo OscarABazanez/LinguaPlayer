@@ -5,6 +5,7 @@ import ProgressBar from './ProgressBar';
 import LanguageConfirm from './LanguageConfirm';
 import { transcribeVideo, type TranscriptionProgress } from '../../services/whisperService';
 import { uploadVideo, markVideoProcessed } from '../../services/uploadService';
+import { saveVideoRecord, markVideoProcessed as markVideoProcessedSupabase } from '../../services/supabaseService';
 
 type ExtendedStep = ProcessingStep | 'uploading';
 
@@ -33,13 +34,14 @@ function mapStep(step: TranscriptionProgress['step']): ExtendedStep {
 }
 
 export default function ProcessingPage() {
-  const { videoSource } = useAppState();
+  const { videoSource, nativeLanguage } = useAppState();
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState<ExtendedStep>('uploading');
   const [progress, setProgress] = useState(0);
   const [detectedLang, setDetectedLang] = useState('');
   const [error, setError] = useState<string | null>(null);
   const processingStarted = useRef(false);
+  const supabaseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!videoSource?.file || processingStarted.current) return;
@@ -65,6 +67,22 @@ export default function ProcessingPage() {
 
         if (cancelled) return;
 
+        // Save video record in Supabase (skip if already created by previous StrictMode mount)
+        if (!supabaseIdRef.current) {
+          try {
+            supabaseIdRef.current = await saveVideoRecord(
+              videoSource!.file!.name,
+              storedName ?? null,
+              '', // learning_language unknown until transcription
+              nativeLanguage,
+            );
+          } catch {
+            console.warn('Failed to save video record in Supabase');
+          }
+        }
+
+        if (cancelled) return;
+
         // Steps 1-4: Transcribe with Whisper (client-side)
         const result = await transcribeVideo(videoSource!.file!, (p: TranscriptionProgress) => {
           if (cancelled) return;
@@ -80,6 +98,20 @@ export default function ProcessingPage() {
             await markVideoProcessed(storedName);
           } catch {
             console.warn('Failed to mark video as processed');
+          }
+        }
+
+        // Mark video as processed in Supabase
+        if (supabaseIdRef.current) {
+          try {
+            await markVideoProcessedSupabase(
+              supabaseIdRef.current,
+              result.segments,
+              result.detectedLanguage,
+            );
+            dispatch({ type: 'SET_SUPABASE_VIDEO_ID', id: supabaseIdRef.current });
+          } catch {
+            console.warn('Failed to mark video as processed in Supabase');
           }
         }
 

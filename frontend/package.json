@@ -13,6 +13,7 @@
     "@floating-ui/dom": "^1.7.6",
     "@floating-ui/react": "^0.27.19",
     "@remotion/whisper-web": "^4.0.436",
+    "@supabase/supabase-js": "^2.99.2",
     "@tailwindcss/vite": "^4.2.1",
     "dexie": "^4.3.0",
     "dexie-react-hooks": "^4.2.0",

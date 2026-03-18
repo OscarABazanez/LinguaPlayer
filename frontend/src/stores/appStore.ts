@@ -20,6 +20,7 @@ export interface AppState {
   nativeLanguage: string;
   learningModes: LearningModes;
   darkMode: boolean;
+  supabaseVideoId: string | null;
 }
 
 const getStoredLang = () => {
@@ -56,6 +57,7 @@ export const initialState: AppState = {
   nativeLanguage: getStoredLang(),
   learningModes: getStoredModes(),
   darkMode: getStoredDarkMode(),
+  supabaseVideoId: null,
 };
 
 export type AppAction =
@@ -67,6 +69,7 @@ export type AppAction =
   | { type: 'SET_LEARNING_MODES'; modes: Partial<LearningModes> }
   | { type: 'UPDATE_SEGMENT_TRANSLATION'; index: number; translation: string }
   | { type: 'SET_DARK_MODE'; darkMode: boolean }
+  | { type: 'SET_SUPABASE_VIDEO_ID'; id: string }
   | { type: 'RESET' };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -97,6 +100,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_DARK_MODE':
       localStorage.setItem('linguaplayer_dark_mode', String(action.darkMode));
       return { ...state, darkMode: action.darkMode };
+    case 'SET_SUPABASE_VIDEO_ID':
+      return { ...state, supabaseVideoId: action.id };
     case 'RESET':
       return { ...initialState, nativeLanguage: state.nativeLanguage, learningModes: state.learningModes, darkMode: state.darkMode };
     default:
