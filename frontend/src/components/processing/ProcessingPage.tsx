@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppState, useAppDispatch } from '../../stores/appStore';
 import type { ProcessingStep } from '../../types/video';
 import ProgressBar from './ProgressBar';
@@ -39,9 +39,11 @@ export default function ProcessingPage() {
   const [progress, setProgress] = useState(0);
   const [detectedLang, setDetectedLang] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const processingStarted = useRef(false);
 
   useEffect(() => {
-    if (!videoSource?.file) return;
+    if (!videoSource?.file || processingStarted.current) return;
+    processingStarted.current = true;
 
     let cancelled = false;
 
@@ -56,10 +58,6 @@ export default function ProcessingPage() {
             if (!cancelled) setProgress(Math.round(pct * 0.15));
           });
           storedName = uploadResult.storedName;
-          dispatch({
-            type: 'SET_VIDEO_SOURCE',
-            source: { ...videoSource!, storedName },
-          });
         } catch {
           // Backend may be unavailable — continue without upload
           console.warn('Video upload to backend failed, continuing with local processing');
@@ -104,7 +102,10 @@ export default function ProcessingPage() {
     }
 
     process();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      processingStarted.current = false;
+    };
   }, [videoSource, dispatch]);
 
   const currentStepIndex = STEPS.findIndex(s => s.key === currentStep);

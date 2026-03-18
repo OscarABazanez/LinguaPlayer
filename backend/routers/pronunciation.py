@@ -4,12 +4,12 @@ Compares original text with spoken text using Epitran IPA phonetic analysis.
 """
 import re
 from fastapi import APIRouter, HTTPException
-from ..models.pronunciation_models import (
+from models.pronunciation_models import (
     PronunciationRequest,
     PronunciationResponse,
     WordComparisonResult,
 )
-from ..services.epitran_service import (
+from services.epitran_service import (
     get_word_ipa,
     phonetic_similarity,
     is_language_supported,

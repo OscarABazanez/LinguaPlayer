@@ -1,10 +1,14 @@
 """
 Epitran-based IPA phonetic transcription and similarity scoring.
 """
-import epitran
+try:
+    import epitran
+    _HAS_EPITRAN = True
+except ImportError:
+    _HAS_EPITRAN = False
 
 # Cache Epitran instances per language (they're expensive to create)
-_epitran_cache: dict[str, epitran.Epitran] = {}
+_epitran_cache: dict = {}
 
 # Map from ISO 639-1 codes to Epitran language codes
 LANG_MAP: dict[str, str] = {
@@ -24,8 +28,10 @@ LANG_MAP: dict[str, str] = {
 }
 
 
-def _get_epitran(lang: str) -> epitran.Epitran:
+def _get_epitran(lang: str):
     """Get or create a cached Epitran instance for the given language."""
+    if not _HAS_EPITRAN:
+        return None
     code = LANG_MAP.get(lang, 'eng-Latn')
     if code not in _epitran_cache:
         _epitran_cache[code] = epitran.Epitran(code)
@@ -35,6 +41,8 @@ def _get_epitran(lang: str) -> epitran.Epitran:
 def get_ipa(text: str, lang: str) -> str:
     """Convert text to IPA transcription."""
     epi = _get_epitran(lang)
+    if epi is None:
+        return ""
     return epi.transliterate(text.lower().strip())
 
 
