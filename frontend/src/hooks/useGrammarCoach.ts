@@ -24,6 +24,7 @@ export function useGrammarCoach() {
     targetLang: string,
     nativeLang: string,
     word?: string,
+    videoContext?: string,
   ) => {
     const cacheKey = `${sentence}:${word ?? ''}`;
 
@@ -47,6 +48,7 @@ export function useGrammarCoach() {
         word,
         targetLang,
         nativeLang,
+        videoContext,
       })) {
         if (abortRef.current) return;
         fullText += chunk;

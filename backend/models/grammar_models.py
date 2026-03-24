@@ -7,3 +7,4 @@ class GrammarRequest(BaseModel):
     word: Optional[str] = None
     targetLang: str
     nativeLang: str
+    videoContext: Optional[str] = None

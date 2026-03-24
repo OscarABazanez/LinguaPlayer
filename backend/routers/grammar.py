@@ -15,6 +15,7 @@ async def grammar_endpoint(request: GrammarRequest):
                 word=request.word,
                 target_lang=request.targetLang,
                 native_lang=request.nativeLang,
+                video_context=request.videoContext,
             ):
                 yield chunk
 

@@ -50,6 +50,7 @@ export async function markVideoProcessed(
   transcription: Segment[],
   learningLanguage: string,
   exerciseDifficulties?: SegmentDifficulty[],
+  videoContext?: string,
 ): Promise<void> {
   const { error } = await supabase
     .from('videos')
@@ -58,6 +59,7 @@ export async function markVideoProcessed(
       transcription,
       learning_language: learningLanguage,
       exercise_difficulties: exerciseDifficulties ?? null,
+      video_context: videoContext ?? null,
     })
     .eq('id', videoId);
 

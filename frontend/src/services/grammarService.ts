@@ -5,6 +5,7 @@ export interface GrammarRequest {
   word?: string;
   targetLang: string;
   nativeLang: string;
+  videoContext?: string;
 }
 
 function buildPrompt(req: GrammarRequest): string {
@@ -12,9 +13,12 @@ function buildPrompt(req: GrammarRequest): string {
   const wordAnalysis = req.word
     ? `Explanation of "${req.word}" in this context`
     : 'Key grammar points';
+  const videoContextSection = req.videoContext
+    ? `\nVideo context: ${req.videoContext}\nUse this context to better explain idioms, cultural references, slang, and expressions specific to this content.\n`
+    : '';
 
   return `You are a language tutor. The student is learning ${req.targetLang} and speaks ${req.nativeLang}.
-
+${videoContextSection}
 Analyze this sentence from a video:
 "${req.sentence}"
 ${wordContext}
@@ -22,10 +26,40 @@ Provide:
 1. Literal and natural translation
 2. Grammatical analysis (verb tense, mood, subject)
 3. ${wordAnalysis}
-4. Idiomatic expressions if any
+4. If the sentence contains idioms, slang, cultural references, or expressions: explain their real meaning in context (label: "Cultural context")
 5. One similar example sentence
 
 Respond in ${req.nativeLang}. Be concise.`;
+}
+
+/**
+ * Generate a context summary for a video based on its full transcription.
+ * Called once during processing and stored in Supabase.
+ */
+export async function generateVideoContext(fullTranscription: string, language: string): Promise<string> {
+  const prompt = `Analyze this COMPLETE video transcription and provide a brief context summary.
+
+Full transcription:
+"${fullTranscription}"
+
+Language: ${language}
+
+Respond with a summary covering:
+- Content type: (TV series, movie, documentary, lecture, interview, etc.)
+- Title/Show: (if identifiable)
+- Topic: (main subject)
+- Characters: (if identifiable, list main speakers)
+- Tone: (comedic, dramatic, educational, casual, etc.)
+- Cultural context: (any cultural references, time period, setting)
+- Language style: (formal, informal, slang-heavy, technical, etc.)
+
+Keep it under 150 words. Respond in English for consistency.`;
+
+  const chunks: string[] = [];
+  for await (const chunk of streamRawLLM(prompt)) {
+    chunks.push(chunk);
+  }
+  return chunks.join('');
 }
 
 export async function* streamGrammarExplanation(req: GrammarRequest): AsyncGenerator<string> {

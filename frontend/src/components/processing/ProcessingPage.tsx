@@ -7,9 +7,10 @@ import { transcribeVideo, type TranscriptionProgress } from '../../services/whis
 import { uploadVideo, markVideoProcessed } from '../../services/uploadService';
 import { saveVideoRecord, markVideoProcessed as markVideoProcessedSupabase } from '../../services/supabaseService';
 import { classifySegmentDifficulties, selectExerciseSegments } from '../../services/exerciseClassificationService';
+import { generateVideoContext } from '../../services/grammarService';
 import type { SegmentDifficulty } from '../../types/exercise';
 
-type ExtendedStep = ProcessingStep | 'uploading' | 'classifying';
+type ExtendedStep = ProcessingStep | 'uploading' | 'classifying' | 'generating-context';
 
 interface StepInfo {
   key: ExtendedStep;
@@ -22,6 +23,7 @@ const STEPS: StepInfo[] = [
   { key: 'extracting-audio', label: 'Extracting audio...' },
   { key: 'transcribing', label: 'Transcribing with Whisper...' },
   { key: 'classifying', label: 'Classifying exercises...' },
+  { key: 'generating-context', label: 'Analyzing video context...' },
   { key: 'done', label: 'Ready!' },
 ];
 
@@ -126,7 +128,22 @@ export default function ProcessingPage() {
           console.warn('Exercise classification failed, continuing without exercises');
         }
 
-        // Mark video as processed in Supabase (includes exercise difficulties)
+        // Generate video context summary with LLM (one-time)
+        if (cancelled) return;
+        setCurrentStep('generating-context');
+        setProgress(97);
+        let videoContextResult: string | undefined;
+        try {
+          const fullTranscription = result.segments.map(s => s.text).join(' ');
+          videoContextResult = await generateVideoContext(fullTranscription, result.detectedLanguage);
+          if (videoContextResult) {
+            dispatch({ type: 'SET_VIDEO_CONTEXT', context: videoContextResult });
+          }
+        } catch {
+          console.warn('Video context generation failed, continuing without context');
+        }
+
+        // Mark video as processed in Supabase (includes exercise difficulties + context)
         if (supabaseIdRef.current) {
           try {
             await markVideoProcessedSupabase(
@@ -134,6 +151,7 @@ export default function ProcessingPage() {
               result.segments,
               result.detectedLanguage,
               allDifficulties.length > 0 ? allDifficulties : undefined,
+              videoContextResult,
             );
             dispatch({ type: 'SET_SUPABASE_VIDEO_ID', id: supabaseIdRef.current });
           } catch {
