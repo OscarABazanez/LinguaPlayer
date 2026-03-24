@@ -43,13 +43,20 @@ export function usePronunciationPractice(): UsePronunciationPractice {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const startPractice = useCallback(async (segmentText: string, language: string, nativeLanguage: string) => {
+    // Clear all previous state before starting new practice
+    setState('idle');
+    setResult(null);
+    setError(null);
+    setTips('');
+    setTipsLoading(false);
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
+    audioBlobRef.current = null;
+    abortRef.current = false;
+
     segmentTextRef.current = segmentText;
     languageRef.current = language;
     nativeLanguageRef.current = nativeLanguage;
-    setError(null);
-    setResult(null);
-    setTips('');
-    abortRef.current = false;
 
     try {
       await recorder.startRecording();
@@ -58,7 +65,7 @@ export function usePronunciationPractice(): UsePronunciationPractice {
       setError(err instanceof Error ? err.message : 'Failed to start recording');
       setState('error');
     }
-  }, [recorder]);
+  }, [recorder, audioUrl]);
 
   const stopPractice = useCallback(async () => {
     if (state !== 'recording') return;

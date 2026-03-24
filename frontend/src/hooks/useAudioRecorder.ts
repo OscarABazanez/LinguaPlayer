@@ -21,6 +21,9 @@ export function useAudioRecorder(): UseAudioRecorder {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
       }
@@ -32,11 +35,23 @@ export function useAudioRecorder(): UseAudioRecorder {
       setError(null);
       chunksRef.current = [];
 
+      // Clean up previous recorder if exists
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
+
+      // Stop previous stream if exists
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 16000,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: true,
         },
       });
       streamRef.current = stream;
@@ -80,7 +95,7 @@ export function useAudioRecorder(): UseAudioRecorder {
         }
       };
 
-      recorder.start(100); // Collect data every 100ms
+      recorder.start();
       setState('recording');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Microphone access denied';

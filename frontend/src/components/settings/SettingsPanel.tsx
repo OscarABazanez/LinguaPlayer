@@ -42,6 +42,7 @@ export default function SettingsPanel({ onClose }: Props) {
     { key: 'grammarColors' as const, label: 'Grammar colors', desc: 'Color words by part of speech' },
     { key: 'autoPause' as const, label: 'Auto-pause', desc: 'Pause after each sentence' },
     { key: 'autoLoop' as const, label: 'Auto-loop', desc: 'Repeat current sentence' },
+    { key: 'autoExercises' as const, label: 'Auto-exercises', desc: 'Practice pronunciation during playback' },
   ];
 
   return (

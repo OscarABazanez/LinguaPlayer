@@ -6,8 +6,10 @@ import LanguageConfirm from './LanguageConfirm';
 import { transcribeVideo, type TranscriptionProgress } from '../../services/whisperService';
 import { uploadVideo, markVideoProcessed } from '../../services/uploadService';
 import { saveVideoRecord, markVideoProcessed as markVideoProcessedSupabase } from '../../services/supabaseService';
+import { classifySegmentDifficulties, selectExerciseSegments } from '../../services/exerciseClassificationService';
+import type { SegmentDifficulty } from '../../types/exercise';
 
-type ExtendedStep = ProcessingStep | 'uploading';
+type ExtendedStep = ProcessingStep | 'uploading' | 'classifying';
 
 interface StepInfo {
   key: ExtendedStep;
@@ -19,6 +21,7 @@ const STEPS: StepInfo[] = [
   { key: 'loading-model', label: 'Loading Whisper model...' },
   { key: 'extracting-audio', label: 'Extracting audio...' },
   { key: 'transcribing', label: 'Transcribing with Whisper...' },
+  { key: 'classifying', label: 'Classifying exercises...' },
   { key: 'done', label: 'Ready!' },
 ];
 
@@ -101,13 +104,36 @@ export default function ProcessingPage() {
           }
         }
 
-        // Mark video as processed in Supabase
+        setDetectedLang(result.detectedLanguage);
+        dispatch({ type: 'SET_DETECTED_LANGUAGE', language: result.detectedLanguage });
+
+        // Classify exercises with LLM (during processing, one-time)
+        if (cancelled) return;
+        setCurrentStep('classifying');
+        setProgress(95);
+        let allDifficulties: SegmentDifficulty[] = [];
+        try {
+          allDifficulties = await classifySegmentDifficulties(result.segments, result.detectedLanguage);
+          const selectedSegments = selectExerciseSegments(allDifficulties, result.segments.length);
+          const diffMap = new Map<number, SegmentDifficulty>();
+          for (const d of allDifficulties) {
+            if (selectedSegments.has(d.segmentIndex)) {
+              diffMap.set(d.segmentIndex, d);
+            }
+          }
+          dispatch({ type: 'SET_EXERCISE_DATA', segments: selectedSegments, difficulties: diffMap });
+        } catch {
+          console.warn('Exercise classification failed, continuing without exercises');
+        }
+
+        // Mark video as processed in Supabase (includes exercise difficulties)
         if (supabaseIdRef.current) {
           try {
             await markVideoProcessedSupabase(
               supabaseIdRef.current,
               result.segments,
               result.detectedLanguage,
+              allDifficulties.length > 0 ? allDifficulties : undefined,
             );
             dispatch({ type: 'SET_SUPABASE_VIDEO_ID', id: supabaseIdRef.current });
           } catch {
@@ -115,8 +141,7 @@ export default function ProcessingPage() {
           }
         }
 
-        setDetectedLang(result.detectedLanguage);
-        dispatch({ type: 'SET_DETECTED_LANGUAGE', language: result.detectedLanguage });
+        if (cancelled) return;
         setCurrentStep('done');
         setProgress(100);
 
