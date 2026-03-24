@@ -48,9 +48,19 @@ export async function transcribeRecording(audioBlob: Blob): Promise<string> {
  * Convert audio Blob (webm/mp4) to WAV Blob for Whisper.
  */
 export async function convertToWav(audioBlob: Blob): Promise<Blob> {
-  const arrayBuffer = await audioBlob.arrayBuffer();
+  const originalBuffer = await audioBlob.arrayBuffer();
+  // Create a true independent copy — slice() may not fully detach in all browsers
+  const arrayBuffer = new ArrayBuffer(originalBuffer.byteLength);
+  new Uint8Array(arrayBuffer).set(new Uint8Array(originalBuffer));
+
   const audioContext = new AudioContext();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  let audioBuffer: AudioBuffer;
+  try {
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  } catch {
+    await audioContext.close();
+    throw new Error('Unable to decode audio data. Please try recording again.');
+  }
   await audioContext.close();
 
   // Convert to WAV

@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, type Dispatch } from 'react';
 import type { Segment } from '../types/subtitle';
 import type { VideoSource } from '../types/video';
+import type { SegmentDifficulty } from '../types/exercise';
 import { DEFAULT_NATIVE_LANGUAGE } from '../utils/constants';
 
 export type AppScreen = 'home' | 'processing' | 'player';
@@ -10,6 +11,7 @@ export interface LearningModes {
   autoLoop: boolean;
   grammarColors: boolean;
   dualSubtitles: boolean;
+  autoExercises: boolean;
 }
 
 export interface AppState {
@@ -22,6 +24,9 @@ export interface AppState {
   videoLanguage: string;
   darkMode: boolean;
   supabaseVideoId: string | null;
+  exerciseSegments: Set<number> | null;
+  exerciseDifficulties: Map<number, SegmentDifficulty> | null;
+  exercisedSegments: Set<number>;
 }
 
 const getStoredLang = () => {
@@ -47,7 +52,7 @@ const getStoredModes = (): LearningModes => {
     const stored = localStorage.getItem('linguaplayer_modes');
     if (stored) return JSON.parse(stored);
   } catch { /* ignore */ }
-  return { autoPause: false, autoLoop: false, grammarColors: false, dualSubtitles: true };
+  return { autoPause: false, autoLoop: false, grammarColors: false, dualSubtitles: true, autoExercises: true };
 };
 
 export const initialState: AppState = {
@@ -60,6 +65,9 @@ export const initialState: AppState = {
   videoLanguage: localStorage.getItem('linguaplayer_video_lang') ?? 'auto',
   darkMode: getStoredDarkMode(),
   supabaseVideoId: null,
+  exerciseSegments: null,
+  exerciseDifficulties: null,
+  exercisedSegments: new Set(),
 };
 
 export type AppAction =
@@ -73,6 +81,8 @@ export type AppAction =
   | { type: 'SET_VIDEO_LANGUAGE'; language: string }
   | { type: 'SET_DARK_MODE'; darkMode: boolean }
   | { type: 'SET_SUPABASE_VIDEO_ID'; id: string }
+  | { type: 'SET_EXERCISE_DATA'; segments: Set<number>; difficulties: Map<number, SegmentDifficulty> }
+  | { type: 'MARK_SEGMENT_EXERCISED'; index: number }
   | { type: 'RESET' };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -108,6 +118,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, darkMode: action.darkMode };
     case 'SET_SUPABASE_VIDEO_ID':
       return { ...state, supabaseVideoId: action.id };
+    case 'SET_EXERCISE_DATA':
+      return { ...state, exerciseSegments: action.segments, exerciseDifficulties: action.difficulties };
+    case 'MARK_SEGMENT_EXERCISED': {
+      const exercised = new Set(state.exercisedSegments);
+      exercised.add(action.index);
+      return { ...state, exercisedSegments: exercised };
+    }
     case 'RESET':
       return { ...initialState, nativeLanguage: state.nativeLanguage, learningModes: state.learningModes, darkMode: state.darkMode };
     default:

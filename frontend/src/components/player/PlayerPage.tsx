@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useAppState } from '../../stores/appStore';
+import { useState, useEffect } from 'react';
+import { useAppState, useAppDispatch } from '../../stores/appStore';
 import { saveWordLookup } from '../../services/supabaseService';
 import { useVideoPlayer } from '../../hooks/useVideoPlayer';
 import { useSubtitleSync } from '../../hooks/useSubtitleSync';
@@ -9,21 +9,37 @@ import { useSegmentLoop } from '../../hooks/useSegmentLoop';
 import { useActiveWord } from '../../hooks/useActiveWord';
 import { useVideoGestures } from '../../hooks/useVideoGestures';
 import { usePronunciationPractice } from '../../hooks/usePronunciationPractice';
+import { useAutoExercise } from '../../hooks/useAutoExercise';
 import VideoPlayer from './VideoPlayer';
 import PlayerControls from './PlayerControls';
 import ProgressSeekBar from './ProgressSeekBar';
 import SubtitleOverlay from './SubtitleOverlay';
 import Sidebar from '../sidebar/Sidebar';
 import GrammarPopup from '../popup/GrammarPopup';
+import ExercisePopup from '../popup/ExercisePopup';
 import type { Word } from '../../types/subtitle';
 import type { TabKey } from '../sidebar/SidebarTabs';
 
 export default function PlayerPage() {
-  const { videoSource, segments, detectedLanguage, nativeLanguage, supabaseVideoId } = useAppState();
+  const { videoSource, segments, detectedLanguage, nativeLanguage, supabaseVideoId, exerciseSegments, exerciseDifficulties, exercisedSegments, learningModes } = useAppState();
+  const appDispatch = useAppDispatch();
   const player = useVideoPlayer();
   const { activeSegmentIndex, activeSegment } = useSubtitleSync(segments, player.currentTime);
   const modes = useLearningModes();
   const grammar = useGrammarCoach();
+  const pronunciation = usePronunciationPractice();
+
+  const exercise = useAutoExercise({
+    currentTime: player.currentTime,
+    activeSegment,
+    isPlaying: player.isPlaying,
+    enabled: learningModes.autoExercises,
+    exerciseSegments,
+    exerciseDifficulties,
+    exercisedSegments,
+    pause: player.pause,
+  });
+
   useSegmentLoop({
     currentTime: player.currentTime,
     activeSegment,
@@ -32,10 +48,10 @@ export default function PlayerPage() {
     autoPause: modes.autoPause,
     seek: player.seek,
     pause: player.pause,
+    disabled: exercise.isExerciseActive,
   });
 
   const activeWordIndex = useActiveWord(activeSegment?.words, player.currentTime);
-  const pronunciation = usePronunciationPractice();
 
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('script');
@@ -96,6 +112,32 @@ export default function PlayerPage() {
 
   const handleRequestTips = () => {
     pronunciation.requestTips(nativeLanguage);
+  };
+
+  // Exercise handlers
+  const handleExerciseAccept = () => {
+    exercise.acceptExercise();
+    if (exercise.pendingSegment) {
+      pronunciation.reset();
+      pronunciation.startPractice(exercise.pendingSegment.text, detectedLanguage, nativeLanguage);
+    }
+  };
+
+  const handleExerciseDecline = () => {
+    if (exercise.pendingSegment) {
+      appDispatch({ type: 'MARK_SEGMENT_EXERCISED', index: exercise.pendingSegment.index });
+    }
+    exercise.declineExercise();
+    player.play();
+  };
+
+  const handleExerciseComplete = () => {
+    if (exercise.pendingSegment) {
+      appDispatch({ type: 'MARK_SEGMENT_EXERCISED', index: exercise.pendingSegment.index });
+    }
+    pronunciation.reset();
+    exercise.completeExercise();
+    player.play();
   };
 
   const videoSrc = videoSource?.type === 'file' ? videoSource.objectUrl : undefined;
@@ -196,6 +238,28 @@ export default function PlayerPage() {
           />
         </div>
       </div>
+
+      {/* Exercise popup */}
+      {exercise.pendingExercise && exercise.pendingSegment && (
+        <ExercisePopup
+          segment={exercise.pendingSegment}
+          difficulty={exercise.pendingExercise}
+          pronunciationState={pronunciation.state}
+          pronunciationResult={pronunciation.result}
+          pronunciationError={pronunciation.error}
+          pronunciationTips={pronunciation.pronunciationTips}
+          tipsLoading={pronunciation.tipsLoading}
+          audioUrl={pronunciation.audioUrl}
+          onAccept={handleExerciseAccept}
+          onDecline={handleExerciseDecline}
+          onComplete={handleExerciseComplete}
+          onPronunciationStart={handleExerciseAccept}
+          onPronunciationStop={pronunciation.stopPractice}
+          onPronunciationSubmit={pronunciation.submitRecording}
+          onPronunciationReset={pronunciation.reset}
+          onRequestTips={handleRequestTips}
+        />
+      )}
     </div>
   );
 }

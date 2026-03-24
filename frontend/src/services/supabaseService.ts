@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Segment } from '../types/subtitle';
+import type { SegmentDifficulty } from '../types/exercise';
 
 function getUserTimezone(): string {
   try {
@@ -48,6 +49,7 @@ export async function markVideoProcessed(
   videoId: string,
   transcription: Segment[],
   learningLanguage: string,
+  exerciseDifficulties?: SegmentDifficulty[],
 ): Promise<void> {
   const { error } = await supabase
     .from('videos')
@@ -55,6 +57,7 @@ export async function markVideoProcessed(
       is_processed: true,
       transcription,
       learning_language: learningLanguage,
+      exercise_difficulties: exerciseDifficulties ?? null,
     })
     .eq('id', videoId);
 

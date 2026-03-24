@@ -9,15 +9,17 @@ interface UseSegmentLoopParams {
   autoPause: boolean;
   seek: (time: number) => void;
   pause: () => void;
+  disabled?: boolean;
 }
 
 export function useSegmentLoop({
   currentTime, activeSegment, isPlaying,
-  autoLoop, autoPause, seek, pause,
+  autoLoop, autoPause, seek, pause, disabled,
 }: UseSegmentLoopParams) {
   const handledRef = useRef<number>(-1);
 
   useEffect(() => {
+    if (disabled) return;
     if (!activeSegment || !isPlaying) return;
     if (!autoLoop && !autoPause) return;
 
@@ -35,5 +37,5 @@ export function useSegmentLoop({
         handledRef.current = -1;
       }
     }
-  }, [Math.floor(currentTime * 60), activeSegment, isPlaying, autoLoop, autoPause, seek, pause]);
+  }, [Math.floor(currentTime * 60), activeSegment, isPlaying, autoLoop, autoPause, seek, pause, disabled]);
 }
