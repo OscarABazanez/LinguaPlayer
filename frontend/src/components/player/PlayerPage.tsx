@@ -114,6 +114,13 @@ export default function PlayerPage() {
     pronunciation.requestTips(nativeLanguage);
   };
 
+  // Reset pronunciation when a new exercise appears
+  useEffect(() => {
+    if (exercise.pendingSegment) {
+      pronunciation.reset();
+    }
+  }, [exercise.pendingSegment]);
+
   // Exercise handlers
   const handleExerciseAccept = () => {
     exercise.acceptExercise();
@@ -244,6 +251,8 @@ export default function PlayerPage() {
         <ExercisePopup
           segment={exercise.pendingSegment}
           difficulty={exercise.pendingExercise}
+          detectedLanguage={detectedLanguage}
+          nativeLanguage={nativeLanguage}
           pronunciationState={pronunciation.state}
           pronunciationResult={pronunciation.result}
           pronunciationError={pronunciation.error}
