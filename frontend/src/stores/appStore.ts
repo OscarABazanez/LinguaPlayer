@@ -27,6 +27,7 @@ export interface AppState {
   exerciseSegments: Set<number> | null;
   exerciseDifficulties: Map<number, SegmentDifficulty> | null;
   exercisedSegments: Set<number>;
+  videoContext: string | null;
 }
 
 const getStoredLang = () => {
@@ -68,6 +69,7 @@ export const initialState: AppState = {
   exerciseSegments: null,
   exerciseDifficulties: null,
   exercisedSegments: new Set(),
+  videoContext: null,
 };
 
 export type AppAction =
@@ -83,6 +85,7 @@ export type AppAction =
   | { type: 'SET_SUPABASE_VIDEO_ID'; id: string }
   | { type: 'SET_EXERCISE_DATA'; segments: Set<number>; difficulties: Map<number, SegmentDifficulty> }
   | { type: 'MARK_SEGMENT_EXERCISED'; index: number }
+  | { type: 'SET_VIDEO_CONTEXT'; context: string }
   | { type: 'RESET' };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -120,6 +123,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, supabaseVideoId: action.id };
     case 'SET_EXERCISE_DATA':
       return { ...state, exerciseSegments: action.segments, exerciseDifficulties: action.difficulties };
+    case 'SET_VIDEO_CONTEXT':
+      return { ...state, videoContext: action.context };
     case 'MARK_SEGMENT_EXERCISED': {
       const exercised = new Set(state.exercisedSegments);
       exercised.add(action.index);

@@ -21,7 +21,7 @@ import type { Word } from '../../types/subtitle';
 import type { TabKey } from '../sidebar/SidebarTabs';
 
 export default function PlayerPage() {
-  const { videoSource, segments, detectedLanguage, nativeLanguage, supabaseVideoId, exerciseSegments, exerciseDifficulties, exercisedSegments, learningModes } = useAppState();
+  const { videoSource, segments, detectedLanguage, nativeLanguage, supabaseVideoId, exerciseSegments, exerciseDifficulties, exercisedSegments, learningModes, videoContext } = useAppState();
   const appDispatch = useAppDispatch();
   const player = useVideoPlayer();
   const { activeSegmentIndex, activeSegment } = useSubtitleSync(segments, player.currentTime);
@@ -94,7 +94,7 @@ export default function PlayerPage() {
   const handleGrammarCoach = () => {
     if (!activeSegment) return;
     player.pause();
-    grammar.explain(activeSegment.text, detectedLanguage, nativeLanguage);
+    grammar.explain(activeSegment.text, detectedLanguage, nativeLanguage, undefined, videoContext ?? undefined);
     setShowGrammarPopup(true);
     setActiveTab('grammar');
   };

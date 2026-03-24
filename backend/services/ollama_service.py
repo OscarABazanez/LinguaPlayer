@@ -5,24 +5,40 @@ from config import settings
 
 
 GRAMMAR_PROMPT_TEMPLATE = """You are a language tutor. The student is learning {target_lang} and speaks {native_lang}.
-
+{video_context_section}
 Analyze this sentence from a video:
 "{sentence}"
 {word_context}
+
 Provide:
-1. Literal and natural translation
-2. Grammatical analysis (verb tense, mood, subject)
+1. **Translation**:
+   - Literal translation
+   - Natural/equivalent translation in {native_lang}
+   - If any word or phrase is slang, an idiom, a cultural reference, onomatopoeia, or a childish/informal expression (e.g. "neener neener", "duh", "nah nah"), do NOT treat it as a typo or mispronunciation. Instead, keep it in the literal translation and provide its real equivalent in the natural translation.
+
+2. **Grammar**: Verb tense, mood, subject (be concise)
+
 3. {word_analysis}
-4. Idiomatic expressions if any
-5. One similar example sentence
 
-Respond in {native_lang}. Be concise."""
+4. **Cultural context** (ALWAYS check for this):
+   - Identify any idioms, slang, catchphrases, cultural references, or informal expressions
+   - Explain what they really mean in context
+   - If the sentence comes from a TV show, movie, or song, explain how the character or context gives it additional meaning
+
+5. **Example**: One similar sentence using the same structure or expression
+
+Respond in {native_lang}. Be concise but never skip cultural context."""
 
 
-def build_prompt(sentence: str, word: str | None, target_lang: str, native_lang: str) -> str:
+def build_prompt(sentence: str, word: str | None, target_lang: str, native_lang: str, video_context: str | None = None) -> str:
     word_context = f'\nThe student clicked on the word: "{word}"' if word else ""
     word_analysis = (
         f'Explanation of "{word}" in this context' if word else "Key grammar points"
+    )
+    video_context_section = (
+        f"\nVideo context: {video_context}\nUse this context to better explain idioms, cultural references, slang, and expressions specific to this content.\n"
+        if video_context
+        else ""
     )
     return GRAMMAR_PROMPT_TEMPLATE.format(
         sentence=sentence,
@@ -30,6 +46,7 @@ def build_prompt(sentence: str, word: str | None, target_lang: str, native_lang:
         word_analysis=word_analysis,
         target_lang=target_lang,
         native_lang=native_lang,
+        video_context_section=video_context_section,
     )
 
 
@@ -38,8 +55,9 @@ async def stream_grammar_explanation(
     word: str | None,
     target_lang: str,
     native_lang: str,
+    video_context: str | None = None,
 ) -> AsyncGenerator[str, None]:
-    prompt = build_prompt(sentence, word, target_lang, native_lang)
+    prompt = build_prompt(sentence, word, target_lang, native_lang, video_context)
 
     # LM Studio uses OpenAI-compatible API at /v1/chat/completions
     async with httpx.AsyncClient(timeout=120.0) as client:
